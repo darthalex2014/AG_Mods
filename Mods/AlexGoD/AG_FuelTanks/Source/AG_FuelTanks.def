@@ -1,0 +1,5 @@
+LIBRARY AG_FuelTanks
+EXPORTS
+    AG_FuelTanks_Init
+    AG_FuelTanks_Save
+    AG_FuelTanks_Load
