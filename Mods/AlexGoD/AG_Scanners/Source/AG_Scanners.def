@@ -1,0 +1,5 @@
+LIBRARY AG_Scanners
+EXPORTS
+    AG_Scanners_Init
+    AG_Scanners_Save
+    AG_Scanners_Load
