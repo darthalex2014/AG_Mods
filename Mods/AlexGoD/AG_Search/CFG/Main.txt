@@ -1,0 +1,22 @@
+BV ^{
+    OnLoad ^{
+        AGSearchLibInit ^{
+            01=unknown AGSearchInit = ImportedFunction('AG_Search', 'AG_Search_Init');
+            02=AGSearchInit();
+        }
+    }
+    OnStart ^{
+        AGSearchLibInit ^{
+            01=unknown AGSearchInit = ImportedFunction('AG_Search', 'AG_Search_Init');
+            02=AGSearchInit();
+        }
+    }
+}
+Data ^{
+    ScriptLibs ^{
+        AG_Search ^{
+            AG_Search_Init=void,AG_Search_Init
+            Path=Mods\AlexGoD\AG_Search\DATA\AG_Search.dll
+        }
+    }
+}
