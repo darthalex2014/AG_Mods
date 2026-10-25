@@ -1,0 +1,5 @@
+LIBRARY AG_Radars
+EXPORTS
+    AG_Radars_Init
+    AG_Radars_Save
+    AG_Radars_Load
