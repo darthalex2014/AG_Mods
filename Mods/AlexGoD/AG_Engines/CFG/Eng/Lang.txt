@@ -1,0 +1,100 @@
+Items ^{
+    Engine ^{
+        Mk1Name=Engine Mk.1
+        Mk1Text=Intermediate 1st generation Mk series engine.
+        Mk2Name=Engine Mk.2
+        Mk2Text=Intermediate 2nd generation Mk series engine.
+        Mk3Name=Engine Mk.3
+        Mk3Text=Intermediate 3rd generation Mk series engine.
+        Mk4Name=Engine Mk.4
+        Mk4Text=Intermediate 4th generation Mk series engine.
+        Mk5Name=Engine Mk.5
+        Mk5Text=Intermediate 5th generation Mk series engine.
+        Mk6Name=Engine Mk.6
+        Mk6Text=Intermediate 6th generation Mk series engine.
+        Mk7Name=Engine Mk.7
+        Mk7Text=Intermediate 7th generation Mk series engine.
+        Mk8Name=Engine Mk.8
+        Mk8Text=Intermediate 8th generation Mk series engine.
+        Mk9Name=Relic Engine Mk.9
+        Mk9Text=Experimental 9th generation prototype engine of the Mk series.
+
+        T1Name=Engine T1
+        T1Text=Heavy boosted 1st generation T series engine.
+        T2Name=Engine T2
+        T2Text=Heavy boosted 2nd generation T series engine.
+        T3Name=Engine T3
+        T3Text=Heavy boosted 3rd generation T series engine.
+        T4Name=Engine T4
+        T4Text=Heavy boosted 4th generation T series engine.
+        T5Name=Engine T5
+        T5Text=Heavy boosted 5th generation T series engine.
+        T6Name=Engine T6
+        T6Text=Heavy boosted 6th generation T series engine.
+        T7Name=Engine T7
+        T7Text=Heavy boosted 7th generation T series engine.
+        T8Name=Engine T8
+        T8Text=Heavy boosted 8th generation T series engine.
+        T9Name=Relic Engine T
+        T9Text=Heavy boosted 9th generation T series engine.
+
+        MkT1Name=Engine Mk.1T
+        MkT1Text=Heavy flagship 1st generation Mk.T series engine.
+        MkT2Name=Engine Mk.2T
+        MkT2Text=Heavy flagship 2nd generation Mk.T series engine.
+        MkT3Name=Engine Mk.3T
+        MkT3Text=Heavy flagship 3rd generation Mk.T series engine.
+        MkT4Name=Engine Mk.4T
+        MkT4Text=Heavy flagship 4th generation Mk.T series engine.
+        MkT5Name=Engine Mk.5T
+        MkT5Text=Heavy flagship 5th generation Mk.T series engine.
+        MkT6Name=Engine Mk.6T
+        MkT6Text=Heavy flagship 6th generation Mk.T series engine.
+        MkT7Name=Engine Mk.7T
+        MkT7Text=Heavy flagship 7th generation Mk.T series engine.
+        MkT8Name=Engine Mk.8T
+        MkT8Text=Heavy flagship 8th generation Mk.T series engine.
+        Mk9TName=Relic Engine Mk.9T
+        Mk9TText=Superheavy dreadnought hyperdrive of the 9th generation Mk.T series.
+
+        Base9Name=Relic Engine
+        Base9Text=Standard compact 9th generation technology engine.
+
+        # Legacy aliases
+        M1Name=Engine T1
+        M1Text=Heavy boosted 1st generation T series engine.
+        M2Name=Engine T2
+        M2Text=Heavy boosted 2nd generation T series engine.
+        M3Name=Engine T3
+        M3Text=Heavy boosted 3rd generation T series engine.
+        M4Name=Engine T4
+        M4Text=Heavy boosted 4th generation T series engine.
+        M5Name=Engine T5
+        M5Text=Heavy boosted 5th generation T series engine.
+        M6Name=Engine T6
+        M6Text=Heavy boosted 6th generation T series engine.
+        M7Name=Engine T7
+        M7Text=Heavy boosted 7th generation T series engine.
+        M8Name=Engine T8
+        M8Text=Heavy boosted 8th generation T series engine.
+
+        MKM1Name=Engine Mk.1T
+        MKM1Text=Heavy flagship 1st generation Mk.T series engine.
+        MKM2Name=Engine Mk.2T
+        MKM2Text=Heavy flagship 2nd generation Mk.T series engine.
+        MKM3Name=Engine Mk.3T
+        MKM3Text=Heavy flagship 3rd generation Mk.T series engine.
+        MKM4Name=Engine Mk.4T
+        MKM4Text=Heavy flagship 4th generation Mk.T series engine.
+        MKM5Name=Engine Mk.5T
+        MKM5Text=Heavy flagship 5th generation Mk.T series engine.
+        MKM6Name=Engine Mk.6T
+        MKM6Text=Heavy flagship 6th generation Mk.T series engine.
+        MKM7Name=Engine Mk.7T
+        MKM7Text=Heavy flagship 7th generation Mk.T series engine.
+        MKM8Name=Engine Mk.8T
+        MKM8Text=Heavy flagship 8th generation Mk.T series engine.
+        Mk9MKMName=Relic Engine Mk.9T
+        Mk9MKMText=Superheavy dreadnought hyperdrive of the 9th generation Mk.T series.
+    }
+}

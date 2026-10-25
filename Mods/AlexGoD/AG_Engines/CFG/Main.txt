@@ -1,0 +1,22 @@
+BV ^{
+    OnLoad ^{
+        AG_EnginesOnLoad ^{
+            01=unknown Init = ImportedFunction('AG_Engines', 'AG_Engines_Init');
+            02=Init();
+        }
+    }
+    OnStart ^{
+        AG_EnginesOnStart ^{
+            01=unknown Init = ImportedFunction('AG_Engines', 'AG_Engines_Init');
+            02=Init();
+        }
+    }
+}
+Data ^{
+    ScriptLibs ^{
+        AG_Engines ^{
+            AG_Engines_Init=void,AG_Engines_Init
+            Path=Mods\AlexGoD\AG_Engines\DATA\AG_Engines.dll
+        }
+    }
+}
