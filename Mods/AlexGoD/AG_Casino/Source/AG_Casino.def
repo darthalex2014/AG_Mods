@@ -1,0 +1,5 @@
+LIBRARY AG_Casino
+EXPORTS
+    AG_Casino_Init
+    Casino_OpenRoulette
+    Casino_IsActive
