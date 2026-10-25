@@ -1,0 +1,22 @@
+BV ^{
+    OnLoad ^{
+        AG_DefGeneratorsOnLoad ^{
+            01=unknown Init = ImportedFunction('AG_DefGenerators', 'AG_DefGenerators_Init');
+            02=Init();
+        }
+    }
+    OnStart ^{
+        AG_DefGeneratorsOnStart ^{
+            01=unknown Init = ImportedFunction('AG_DefGenerators', 'AG_DefGenerators_Init');
+            02=Init();
+        }
+    }
+}
+Data ^{
+    ScriptLibs ^{
+        AG_DefGenerators ^{
+            AG_DefGenerators_Init=void,AG_DefGenerators_Init
+            Path=Mods\AlexGoD\AG_DefGenerators\DATA\AG_DefGenerators.dll
+        }
+    }
+}

@@ -1,0 +1,5 @@
+LIBRARY AG_DefGenerators
+EXPORTS
+    AG_DefGenerators_Init
+    AG_DefGenerators_Save
+    AG_DefGenerators_Load
