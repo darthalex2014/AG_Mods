@@ -7,7 +7,7 @@
 #pragma comment(lib, "OleAut32.lib")
 
 // ======================================================================
-// AG_FuelTanks v1.0 (Space Rangers HD: Universe / Evolution EvoBalance)
+// AG_FuelTanks v1.1 (Space Rangers HD: Universe / Evolution EvoBalance)
 // Author: AlexGoD
 // ======================================================================
 
@@ -65,7 +65,7 @@ static void RestoreAllPatches() {
     }
     s_patchCount = 0;
     s_installed = FALSE;
-    Log("=== AG_FuelTanks v1.0 hooks cleanly uninstalled (original bytes restored) ===\n");
+    Log("=== AG_FuelTanks v1.1 hooks cleanly uninstalled (original bytes restored) ===\n");
 }
 
 // Stubs for ScriptLibs compatibility
@@ -175,7 +175,7 @@ static int CalculateFuelTankCost(int weight, int baseCost, int owner) {
 }
 
 static int IdentifyCustomModelByConfig(const wchar_t* configBlock, int* outLevel) {
-    if (!configBlock || !configBlock[0]) return 0; // 0 = Vanilla
+    if (!configBlock || !configBlock[0]) return 0;
 
     if (wcscmp(configBlock, L"FuelTanksBase9") == 0) {
         if (outLevel) *outLevel = 9;
@@ -187,7 +187,6 @@ static int IdentifyCustomModelByConfig(const wchar_t* configBlock, int* outLevel
 static int IdentifyCustomModelByNameOverride(const wchar_t* nameOverride, int techLevel, int* outLevel) {
     if (!nameOverride || !nameOverride[0]) return 0;
 
-    // Базовый Т9 Реликтовый топливный бак
     if (wcsstr(nameOverride, L"Реликтовый топливный бак") != NULL) {
         if (outLevel) *outLevel = 9;
         return 4;
@@ -197,7 +196,7 @@ static int IdentifyCustomModelByNameOverride(const wchar_t* nameOverride, int te
 
 static int IdentifyCustomModelFromItem(void* item, int* outLevel) {
     if (!item) return 0;
-    int lvl = *(unsigned char*)((char*)item + 0x64);
+    int lvl = *(unsigned char*)((char*)item + 0x60); // TechLevel is at 0x60 in TFuelTanks
     if (outLevel) *outLevel = lvl;
 
     const wchar_t* configBlock = GetItemConfigBlockName(item);
@@ -213,8 +212,8 @@ static int __fastcall GetModelExpectedCapacityFastcall(void* item) {
     if (!item) return 10;
     __try {
         if (*(BYTE*)((char*)item + 0x0C) != 43) return 10; // item_fueltanks only
-        int lvl = *(unsigned char*)((char*)item + 0x64);
-        int weight = *(int*)((char*)item + 0x18);
+        int lvl = *(unsigned char*)((char*)item + 0x60);    // TechLevel is at 0x60
+        int weight = *(int*)((char*)item + 0x18);          // Weight is at 0x18
         int modelLvl = lvl;
         int modelKind = IdentifyCustomModelFromItem(item, &modelLvl);
 
@@ -243,8 +242,6 @@ static DWORD g_prevSMMHook                   = 0;
 static DWORD g_mmTemplatesGlobalPtrAddr      = 0x008136B4;
 
 static DWORD g_origEquipmentSaveToBufferAddr = 0;
-static DWORD g_readByteFromBufferAddr        = 0;
-static DWORD g_fuelLoadReturnAddr            = 0;
 
 // ======================================================================
 // Helper: Check if Fuel Tank has an Acryn with a unique 3D model (KindGraph)
@@ -400,18 +397,18 @@ extern "C" void __stdcall PostLoadFuelTanksFromBuffer_C(void* item) {
     }
 }
 
-__declspec(naked) void Hook_TFuelTanks_LoadFromBuffer_Naked() {
+__declspec(naked) void Hook_TFuelTanks_LoadFromBuffer_Exit_Naked() {
     __asm {
-        mov eax, esi
-        call dword ptr [g_readByteFromBufferAddr]
-        mov byte ptr [ebx + 0x65], al
+        mov byte ptr [ebx + 0x68], al // Restore original instruction: Capacity = al
 
         pushad
         push ebx
         call PostLoadFuelTanksFromBuffer_C
         popad
 
-        jmp dword ptr [g_fuelLoadReturnAddr]
+        pop esi
+        pop ebx
+        ret
     }
 }
 
@@ -433,16 +430,22 @@ static unsigned int ModRandom(unsigned int minVal, unsigned int maxVal) {
 extern "C" void __stdcall PostProcessFuelTanksInit_C(void* item, DWORD callerAddr, int weight, int level, int owner) {
     if (!item) return;
 
+    // 1. СТРОГИЙ ПРЕДОХРАНИТЕЛЬ: ТОЛЬКО топливные баки (ItemType = 43)
+    if (*(BYTE*)((char*)item + 0x0C) != 43) return;
+
+    // 2. СТРОГИЙ ПРЕДОХРАНИТЕЛЬ ВЕСА: нормальный вес баков от 20 до 80 тонн
+    if (weight < 20 || weight > 80) return;
+
+    // 3. ИЗОЛЯЦИЯ: отсекаем NPC, станции и Доминаторов
+    if (callerAddr == 0x006E14CA) return; // TShip.CreateAndEquipFuelTanks
+    if (callerAddr == 0x005BF644) return; // aPlayer starting equipment
+    if (owner == 5 || owner == 6) return;  // Dominator (oiDominator) or Uninhabited
+
     level = level & 0xFF;
     if (level < 1) level = 1;
     if (level > 8) level = 8;
 
-    // Skip TShip equipment calls (NPCs, warriors, pirates, stations)
-    if (callerAddr == 0x006E1414) return;
-    // Skip Player start bonus (aPlayer branches)
-    if (callerAddr >= 0x0057FA00 && callerAddr <= 0x00580900) return;
-
-    // Все ванильные баки Т1..Т8 получают справедливую цену без бага -50%!
+    // Все ванильные баки Т1..Т8 в магазинах получают справедливую цену без бага -50%!
     *(int*)((char*)item + 0x20) = CalculateFuelTankCost(weight, s_baseTierCost[level], owner);
 
     // Спавн Реликта 9-го тира на поздней стадии игры (Т8)
@@ -454,12 +457,12 @@ extern "C" void __stdcall PostProcessFuelTanksInit_C(void* item, DWORD callerAdd
             SetItemNameOverride(item, L"Реликтовый топливный бак");
 
             int customCapacity = (weight / 2) + 50; // 20т->60, 40т->70, 80т->90
-            *(BYTE*)((char*)item + 0x65) = (BYTE)customCapacity;
-            *(int*)((char*)item + 0x60) = customCapacity; // Полный бак при спавне
+            *(BYTE*)((char*)item + 0x68) = (BYTE)customCapacity; // Capacity is at +0x68
+            *(int*)((char*)item + 0x64) = customCapacity;        // Fuel is at +0x64 (полный бак)
 
             *(int*)((char*)item + 0x20) = CalculateFuelTankCost(weight, s_baseTierCost[9], owner);
-            Log("[RELIC T9] Spawned Relic Fuel Tank! Weight=%d, Capacity=%d, Price=%d\n", 
-                weight, customCapacity, *(int*)((char*)item + 0x20));
+            Log("[RELIC T9] Spawned Relic Fuel Tank! Weight=%d, Capacity=%d, Price=%d, Owner=%d\n", 
+                weight, customCapacity, *(int*)((char*)item + 0x20), owner);
         }
     }
 }
@@ -467,26 +470,25 @@ extern "C" void __stdcall PostProcessFuelTanksInit_C(void* item, DWORD callerAdd
 __declspec(naked) void Hook_TFuelTanks_Init_Exit_Naked() {
     __asm {
         xor eax, eax
-        mov [ebx + 0x78], eax
-        xor eax, eax
-        mov [ebx + 0x7C], eax
+        mov [esi + 0x50], eax
 
         pushad
-        movzx ecx, byte ptr [ebx + 0x1C]  // OwnerId
+        movzx ecx, byte ptr [esi + 0x1C]  // OwnerId
         push ecx
-        movzx ecx, byte ptr [ebx + 0x64]  // TechLevel
+        movzx ecx, byte ptr [esi + 0x60]  // TechLevel
         push ecx
-        mov ecx, [ebx + 0x18]             // Weight
+        mov ecx, [esi + 0x18]             // Weight
         push ecx
         mov ecx, [ebp + 4]                // Caller return address
         push ecx
-        push ebx                          // item (Self)
+        push esi                          // item (Self = esi!)
         call PostProcessFuelTanksInit_C
         popad
 
+        pop esi
         pop ebx
         pop ebp
-        ret 0x10
+        ret 4
     }
 }
 
@@ -501,6 +503,70 @@ __declspec(naked) void Hook_CalculateFuelCapacity_Naked() {
         mov ecx, eax
         call GetModelExpectedCapacityFastcall
         pop ebx
+        ret
+    }
+}
+
+// ======================================================================
+// HasStandardStats Hook: Guarantees Science Base Upgrades for T9!
+// ======================================================================
+
+static BOOL __fastcall FuelTanks_HasStandardStats_Fastcall(void* item) {
+    if (!item) return FALSE;
+    __try {
+        if (*(BYTE*)((char*)item + 0x0C) != 43) return FALSE;
+
+        int lvl = *(BYTE*)((char*)item + 0x60);
+        int weight = *(int*)((char*)item + 0x18);
+        int cap = *(BYTE*)((char*)item + 0x68);
+        int mmIdx = *(int*)((char*)item + 0x50);
+        int mmBonus = 0;
+        int sizePercent = 0;
+
+        if (mmIdx > 0 && g_mmTemplatesGlobalPtrAddr) {
+            char*** ppp = (char***)g_mmTemplatesGlobalPtrAddr;
+            if (ppp && *ppp && **ppp) {
+                char* mmBase = **ppp;
+                DWORD entryOffset = (DWORD)(mmIdx * 0x49 * 4);
+                mmBonus = *(int*)(mmBase + entryOffset - 0x10C); // bonFuel
+                sizePercent = *(int*)(mmBase + entryOffset - 0x60); // SizePercent
+            }
+        }
+
+        int baseCap = cap - mmBonus;
+        int modelLvl = lvl;
+        int modelKind = IdentifyCustomModelFromItem(item, &modelLvl);
+
+        int baseTableCap = 0;
+        if (modelKind == 4 || lvl == 9) {
+            baseTableCap = 50; // T9 base
+        } else if (lvl >= 1 && lvl <= 8) {
+            baseTableCap = s_vanillaCapacity[lvl];
+        } else {
+            baseTableCap = 10;
+        }
+
+        int expectedWeight = (baseCap - baseTableCap) * 2;
+        if (sizePercent > 0) {
+            expectedWeight = (int)((double)expectedWeight * (double)sizePercent / 100.0 + 0.5);
+        }
+
+        int diff = expectedWeight - weight;
+        if (diff < 0) diff = -diff;
+        return (diff <= 1);
+    } __except (EXCEPTION_EXECUTE_HANDLER) {
+        return FALSE;
+    }
+}
+
+__declspec(naked) void Hook_TFuelTanks_HasStandardStats_Naked() {
+    __asm {
+        push ecx
+        push edx
+        mov ecx, eax // Self (TFuelTanks*)
+        call FuelTanks_HasStandardStats_Fastcall
+        pop edx
+        pop ecx
         ret
     }
 }
@@ -587,7 +653,7 @@ static void InstallJmpHook(DWORD addr, void* target, size_t len, const char* nam
 void InstallFuelTanksHooks() {
     if (s_installed) return;
 
-    Log("=== AG_FuelTanks v1.0 initializing (Savegame Safe + Science Base + Acryn Support) ===\n");
+    Log("=== AG_FuelTanks v1.1 initializing (Savegame Safe + Science Base + Acryn Support) ===\n");
 
     uintptr_t codeBase = 0;
     size_t codeSize = 0;
@@ -596,27 +662,30 @@ void InstallFuelTanksHooks() {
         return;
     }
 
-    // 1. Resolve MicroModuleTemplates global pointer from TFuelTanks.HasStandardStats
+    // 1. TFuelTanks.HasStandardStats at 0x006FDB44
     const unsigned char sigHasStats[] = {
-        0x53, 0x56, 0x8B, 0xD8, 0x8B, 0x73, 0x50, 0x85, 0xF6, 0x74, 0x15, 0x6B, 0xC6, 0x49, 0x8B, 0x15
+        0x53, 0x56, 0x57, 0x51, 0x8B, 0xD8, 0x8B, 0x73, 0x50, 0x85, 0xF6
     };
-    uintptr_t matchHasStats = FindPattern(codeBase, codeSize, sigHasStats, "xxxxxxxxxxxxxxxx");
+    uintptr_t matchHasStats = FindPattern(codeBase, codeSize, sigHasStats, "xxxxxxxxxxx");
     if (matchHasStats) {
+        g_hasStandardStatsAddr = (DWORD)matchHasStats;
+        // Read MicroModuleTemplates global pointer from offset +0x16
         g_mmTemplatesGlobalPtrAddr = *(DWORD*)(matchHasStats + 16);
+        InstallJmpHook(g_hasStandardStatsAddr, (void*)Hook_TFuelTanks_HasStandardStats_Naked, 11, "TFuelTanks.HasStandardStats");
     }
 
-    // 2. TFuelTanks.Init Start Hook at 0x006FAA04
+    // 2. TFuelTanks.Init Hook at 0x006FD5C0
     const unsigned char sigFuelInit[] = {
-        0x55, 0x8B, 0xEC, 0x53, 0x8B, 0xD8, 0xC6, 0x43, 0x0C, 0x2A
+        0x55, 0x8B, 0xEC, 0x53, 0x56, 0x8B, 0xF0, 0xC6, 0x46, 0x0C, 0x2B, 0x89, 0x56, 0x18
     };
-    uintptr_t matchInit = FindPattern(codeBase, codeSize, sigFuelInit, "xxxxxxxxxx");
+    uintptr_t matchInit = FindPattern(codeBase, codeSize, sigFuelInit, "xxxxxxxxxxxxxx");
     if (matchInit) {
-        // Epilogue is at matchInit + 0x6D (0x006FAA71)
-        g_fuelInitExitAddr = (DWORD)(matchInit + 0x6D);
-        InstallJmpHook(g_fuelInitExitAddr, (void*)Hook_TFuelTanks_Init_Exit_Naked, 10, "TFuelTanks.Init Exit");
+        // Epilogue is at matchInit + 0x3B (0x006FD5FB)
+        g_fuelInitExitAddr = (DWORD)(matchInit + 0x3B);
+        InstallJmpHook(g_fuelInitExitAddr, (void*)Hook_TFuelTanks_Init_Exit_Naked, 9, "TFuelTanks.Init Exit");
 
-        // 2a. TFuelTanks.SaveToBuffer -> TEquipment.SaveToBuffer call at 0x006FAB33:
-        for (uintptr_t p = matchInit + 0x110; p < matchInit + 0x150; p++) {
+        // 2a. TFuelTanks.SaveToBuffer -> TEquipment.SaveToBuffer call at matchInit + 0x52 (0x006FD612):
+        for (uintptr_t p = matchInit + 0x45; p < matchInit + 0x70; p++) {
             if (*(BYTE*)p == 0xE8) {
                 int rel = *(int*)(p + 1);
                 uintptr_t target = (p + 5) + rel;
@@ -628,15 +697,11 @@ void InstallFuelTanksHooks() {
             }
         }
 
-        // 2b. TFuelTanks.LoadFromBuffer Capacity Read at ~0x006FACD9:
-        uintptr_t loadFromBufAddr = matchInit + 0x2C0; // ~0x6FACD0
-        const unsigned char sigLoadCapRead[] = { 0x8B, 0xC6, 0xE8, 0x00, 0x00, 0x00, 0x00, 0x88, 0x43, 0x65 };
-        uintptr_t matchLoadCap = FindPattern(loadFromBufAddr, 0x40, sigLoadCapRead, "xxx????xxx");
-        if (matchLoadCap) {
-            int rel = *(int*)(matchLoadCap + 3);
-            g_readByteFromBufferAddr = (DWORD)((matchLoadCap + 7) + rel);
-            g_fuelLoadReturnAddr = (DWORD)(matchLoadCap + 10);
-            InstallJmpHook((DWORD)matchLoadCap, (void*)Hook_TFuelTanks_LoadFromBuffer_Naked, 10, "TFuelTanks.LoadFromBuffer Capacity Read");
+        // 2b. TFuelTanks.LoadFromBuffer exit at matchInit + 0xA9 (0x006FD669):
+        const unsigned char sigLoadExit[] = { 0x88, 0x43, 0x68, 0x5E, 0x5B, 0xC3 };
+        uintptr_t matchLoadExit = FindPattern(matchInit + 0x80, 0x40, sigLoadExit, "xxxxxx");
+        if (matchLoadExit) {
+            InstallJmpHook((DWORD)matchLoadExit, (void*)Hook_TFuelTanks_LoadFromBuffer_Exit_Naked, 6, "TFuelTanks.LoadFromBuffer Exit");
         }
     }
 
@@ -656,18 +721,18 @@ void InstallFuelTanksHooks() {
         InstallJmpHook(g_applySMMExitAddr, (void*)Hook_ApplySpecialMicroModule_Exit_Naked, 8, "ApplySpecialMicroModule Exit");
     }
 
-    // 4. TFuelTanks.CalculateCapacity at 0x006FB500
+    // 4. TFuelTanks.CalculateCapacity at 0x006FD978
     const unsigned char sigCalcCap[] = {
-        0x0F, 0xB6, 0x40, 0x64, 0x03, 0xC0, 0x8B, 0x15, 0xCC, 0x35, 0x81, 0x00, 0x0F, 0xB6, 0x44, 0xC2, 0xF0, 0xC3
+        0x53, 0x8B, 0xD8, 0x0F, 0xB6, 0x53, 0x60, 0x8B, 0x43, 0x18, 0xE8
     };
-    uintptr_t matchCalcCap = FindPattern(codeBase, codeSize, sigCalcCap, "xxxxxxx????xxxxxxx");
+    uintptr_t matchCalcCap = FindPattern(codeBase, codeSize, sigCalcCap, "xxxxxxxxxxx");
     if (matchCalcCap) {
         g_calcGeneratedCapacityAddr = (DWORD)matchCalcCap;
-        InstallJmpHook(g_calcGeneratedCapacityAddr, (void*)Hook_CalculateFuelCapacity_Naked, 18, "TFuelTanks.CalculateCapacity");
+        InstallJmpHook(g_calcGeneratedCapacityAddr, (void*)Hook_CalculateFuelCapacity_Naked, 17, "TFuelTanks.CalculateCapacity");
     }
 
     s_installed = TRUE;
-    Log("=== AG_FuelTanks v1.0 hooks installed successfully (%u patches recorded) ===\n", (unsigned int)s_patchCount);
+    Log("=== AG_FuelTanks v1.1 hooks installed successfully (%u patches recorded) ===\n", (unsigned int)s_patchCount);
 }
 
 extern "C" __declspec(dllexport) void __stdcall AG_FuelTanks_Init() {
