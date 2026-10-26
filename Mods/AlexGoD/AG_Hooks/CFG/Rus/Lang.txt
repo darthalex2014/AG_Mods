@@ -1,7 +1,0 @@
-Items ^{
-    CargoHook ^{
-        Type ^{
-            9=Реликтовый
-        }
-    }
-}

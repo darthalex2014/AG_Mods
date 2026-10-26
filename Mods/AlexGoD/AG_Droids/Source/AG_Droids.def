@@ -1,5 +1,0 @@
-LIBRARY AG_Droids
-EXPORTS
-    AG_Droids_Init
-    AG_Droids_Save
-    AG_Droids_Load

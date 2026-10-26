@@ -1,5 +1,0 @@
-LIBRARY AG_Engines
-EXPORTS
-    AG_Engines_Init
-    AG_Engines_Save
-    AG_Engines_Load

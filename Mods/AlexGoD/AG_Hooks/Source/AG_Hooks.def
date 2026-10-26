@@ -1,5 +1,0 @@
-LIBRARY AG_Hooks
-EXPORTS
-    AG_Hooks_Init
-    AG_Hooks_Save
-    AG_Hooks_Load

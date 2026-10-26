@@ -1,7 +1,0 @@
-Items ^{
-    DefGenerator ^{
-        Type ^{
-            9=Relic
-        }
-    }
-}

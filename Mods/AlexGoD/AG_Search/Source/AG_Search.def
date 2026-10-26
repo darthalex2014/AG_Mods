@@ -1,3 +1,0 @@
-LIBRARY AG_Search
-EXPORTS
-    AG_Search_Init

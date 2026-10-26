@@ -1,7 +1,0 @@
-Items ^{
-    RepairRobot ^{
-        Type ^{
-            9=Реликтовый
-        }
-    }
-}
